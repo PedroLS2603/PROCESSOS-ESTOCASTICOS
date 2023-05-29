@@ -1,13 +1,21 @@
 import numpy as np
 import pandas as pd
+import os
 
 simulacao = pd.DataFrame()
 
+## Valores enunciado
 CUSTO_A = 60
 CUSTO_B = 135
 
 VALOR_VENDA_A = 150
 VALOR_VENDA_B = 280
+
+LIMITE_ESTOQUE_X = 300
+LIMITE_ESTOQUE_Y = 250
+
+POLITICA_COMPRA_ESTOQUE_X = 500
+POLITICA_COMPRA_ESTOQUE_Y = 400
 
 simulacao["dia"] = np.arange(1,21)
 
@@ -18,7 +26,7 @@ producao_a = []
 producao_b = []
 
 # estoque = [X,Y]
-estoque_inicial = [np.random.randint(300, 801),np.random.randint(250, 651)]
+estoque_inicial = [np.random.randint(LIMITE_ESTOQUE_X, LIMITE_ESTOQUE_X + POLITICA_COMPRA_ESTOQUE_X),np.random.randint(LIMITE_ESTOQUE_Y, LIMITE_ESTOQUE_Y + POLITICA_COMPRA_ESTOQUE_Y)]
 estoque_x = []
 estoque_y = []
 
@@ -40,24 +48,24 @@ for index, row in simulacao.iterrows():
 
     else:
         estoque_remanescente_x = estoque_x[index - 1] - 2 * (producao_a[index] + producao_b[index])
-        if (estoque_remanescente_x) <= 300:
+        if (estoque_remanescente_x) <= LIMITE_ESTOQUE_X:
             if (estoque_remanescente_x) < 0:
-                estoque_x.append(500)
+                estoque_x.append(POLITICA_COMPRA_ESTOQUE_X)
             else:
-                estoque_x.append((estoque_remanescente_x) + 500)
+                estoque_x.append((estoque_remanescente_x) + POLITICA_COMPRA_ESTOQUE_X)
         else:
             estoque_x.append(estoque_remanescente_x)
 
         estoque_remanescente_y = estoque_y[index - 1] - producao_a[index - 1] - (3*producao_b[index - 1])
 
-        if estoque_remanescente_y <= 250:
+        if estoque_remanescente_y <= LIMITE_ESTOQUE_Y:
             if estoque_remanescente_y < 0:
                 if index == 1:
                     estoque_y.append(0)
                 else:
-                    estoque_y.append(400)
+                    estoque_y.append(POLITICA_COMPRA_ESTOQUE_Y)
             else:
-                estoque_y.append(estoque_remanescente_y + 400)
+                estoque_y.append(estoque_remanescente_y + POLITICA_COMPRA_ESTOQUE_Y)
         else:
             estoque_y.append(estoque_remanescente_y)
 
@@ -89,8 +97,7 @@ simulacao["estoque inicio do dia Y"] = np.array(estoque_y)
 simulacao["lucro A"] = np.array(lucro_a)
 simulacao["lucro B"] = np.array(lucro_b)
 
-
 simulacao.set_index(simulacao["dia"], inplace=True)
 simulacao.drop("dia", axis=1, inplace=True)
 
-simulacao.to_excel("simulacao.xlsx")
+simulacao.to_excel(os.path.realpath(__file__).replace(__file__.split("\\")[-1], "simulacao.xlsx"))
