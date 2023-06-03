@@ -13,9 +13,9 @@ Variável | X | Y
 Limite do estoque | 300 | 250
 Quantidade de compra do material | 500 | 400
 
-# Tabela de probabilidade
+# Tabelas de probabilidade
 
-## Produto A
+### Produto A
 
 #### Demanda
 Demanda	| Probabilidade
