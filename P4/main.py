@@ -32,7 +32,7 @@ demanda_b = []
 producao_a = []
 producao_b = []
 
-# estoque = [X,Y]
+# Gerando estoque aleatório para início do dia 0 
 estoque_inicial = [np.random.randint(LIMITE_ESTOQUE_X, LIMITE_ESTOQUE_X + POLITICA_COMPRA_ESTOQUE_X),np.random.randint(LIMITE_ESTOQUE_Y, LIMITE_ESTOQUE_Y + POLITICA_COMPRA_ESTOQUE_Y)]
 estoque_x = []
 estoque_y = []
@@ -42,13 +42,13 @@ lucro_b = []
 
 for index, row in simulacao.iterrows():    
     
-    ##### Distribuição probabilidade de demanda e produção 
+    ## Escolhendo valor de acordo com tabela de probabilidade 
     demanda_a.append(np.random.choice([70,80,90,100,120,130], p=[0.1,0.25,0.2,0.3,0.1,0.05])) 
     demanda_b.append(np.random.choice([80,95,110,130,140,160], p=[0.15,0.20,0.25,0.30,0.05,0.05])) 
     producao_a.append(np.random.choice([60,75,80,150,180,200],p=[0.1, 0.2, 0.25, 0.25, 0.1, 0.1]))
     producao_b.append(np.random.choice([60,75,90,110,130,170], p=[0.1,0.2,0.2,0.3,0.1,0.1]))
     
-    ##### Cálculo de estoque no início de cada dia
+    ## Cálculo de estoque no início de cada dia
     if index == 0:
         estoque_x.append(estoque_inicial[0])
         estoque_y.append(estoque_inicial[1])
@@ -90,7 +90,7 @@ for index, row in simulacao.iterrows():
 
         
 
-## Construindo planilha
+## Construindo planilha da simulação
 simulacao["demanda A"] = np.array(demanda_a)
 simulacao["demanda B"] = np.array(demanda_b)
 simulacao["producao A"] = np.array(producao_a)
@@ -106,7 +106,7 @@ simulacao.drop("dia", axis=1, inplace=True)
 ## Construindo gráficos
 width = 0.15
 
-### Produção x Demanda
+### Gerando gráfico de produção x demanda por dia de cada produto
 fig, axs = plt.subplots(2, 1, sharey=True, sharex=True)
 fig.set_figheight(10)
 fig.set_figwidth(15)
@@ -132,7 +132,7 @@ fig.savefig(os.path.realpath(__file__).replace(__file__.split("\\")[-1], "produc
 
 plt.clf()
 
-### Receita
+## Gerando gráfico de receita por dia de cada produto
 plt.title("Receita")
 plt.bar(list_dias + width, simulacao["receita A"], width=width * 2, color="blue", label="A")
 plt.bar(list_dias - width, simulacao["receita B"], width=width * 2,  color="red", label="B")
@@ -143,12 +143,14 @@ plt.legend()
 plt.savefig(os.path.realpath(__file__).replace(__file__.split("\\")[-1], "receita.png"))
 
 
+## Obtendo valores finais do enunciado
 analise = pd.DataFrame()
 total = float(simulacao["receita A"].sum()) + float(simulacao["receita B"].sum())
 analise["Receita Total"] = [total]
 analise["Dias com produção menor que demanda"] = int(simulacao[(simulacao["producao A"] < simulacao["demanda A"]) | (simulacao["producao B"] < simulacao["demanda B"])].count().max())
 analise.set_index(analise["Receita Total"])
 
+## Gerando excel
 with pd.ExcelWriter(os.path.realpath(__file__).replace(__file__.split("\\")[-1], "simulacao.xlsx")) as writer:
     simulacao.to_excel(writer, startcol=0, sheet_name="Simulação")
     analise.to_excel(writer, startcol=12, sheet_name="Simulação")
