@@ -1,10 +1,15 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import os
 
 simulacao = pd.DataFrame()
 
+path = os.path.abspath(__file__)
+
 ## Valores enunciado
+DIAS = 20
+
 CUSTO_A = 60
 CUSTO_B = 135
 
@@ -17,7 +22,9 @@ LIMITE_ESTOQUE_Y = 250
 POLITICA_COMPRA_ESTOQUE_X = 500
 POLITICA_COMPRA_ESTOQUE_Y = 400
 
-simulacao["dia"] = np.arange(1,21)
+list_dias = np.arange(DIAS) + 1
+
+simulacao["dia"] = list_dias
 
 demanda_a= []
 demanda_b = []
@@ -83,21 +90,65 @@ for index, row in simulacao.iterrows():
 
         
 
-
+## Construindo planilha
 simulacao["demanda A"] = np.array(demanda_a)
 simulacao["demanda B"] = np.array(demanda_b)
 simulacao["producao A"] = np.array(producao_a)
 simulacao["producao B"] = np.array(producao_b)
-
-
 simulacao["estoque inicio do dia X"] = np.array(estoque_x)
 simulacao["estoque inicio do dia Y"] = np.array(estoque_y)
-
-
-simulacao["lucro A"] = np.array(lucro_a)
-simulacao["lucro B"] = np.array(lucro_b)
-
+simulacao["receita A"] = np.array(lucro_a)
+simulacao["receita B"] = np.array(lucro_b)
 simulacao.set_index(simulacao["dia"], inplace=True)
 simulacao.drop("dia", axis=1, inplace=True)
 
-simulacao.to_excel(os.path.realpath(__file__).replace(__file__.split("\\")[-1], "simulacao.xlsx"))
+
+## Construindo gráficos
+width = 0.15
+
+### Produção x Demanda
+fig, axs = plt.subplots(2, 1, sharey=True, sharex=True)
+fig.set_figheight(10)
+fig.set_figwidth(15)
+
+
+for ax in axs:
+    ax.set_xticks(list_dias)
+    ax.set_xlabel("Dias")
+    ax.set_ylabel("Quantidade")
+
+fig.suptitle('Produção x Demanda', fontsize=16)
+
+axs[0].bar(list_dias + width, simulacao["demanda A"], width=width*2.5, color="blue", label="Demanda")
+axs[0].bar(list_dias - width, simulacao["producao A"], width=width*2.5, color="red", label="Produção")
+axs[0].set_title("Produto A")
+
+axs[1].bar(list_dias + width, simulacao["demanda B"], width=width*2.5, color="blue")
+axs[1].bar(list_dias - width, simulacao["producao B"], width=width*2.5, color="red")
+axs[1].set_title("Produto B")
+
+fig.legend()
+fig.savefig(os.path.realpath(__file__).replace(__file__.split("\\")[-1], "producao_x_demanda.png"))
+
+plt.clf()
+
+### Receita
+plt.title("Receita")
+plt.bar(list_dias + width, simulacao["receita A"], width=width * 2, color="blue", label="A")
+plt.bar(list_dias - width, simulacao["receita B"], width=width * 2,  color="red", label="B")
+plt.xlabel("Dias")
+plt.ylabel("Receita (R$)")
+plt.xticks(list_dias)
+plt.legend()
+plt.savefig(os.path.realpath(__file__).replace(__file__.split("\\")[-1], "receita.png"))
+
+
+analise = pd.DataFrame()
+total = float(simulacao["receita A"].sum()) + float(simulacao["receita B"].sum())
+analise["Receita Total"] = [total]
+analise["Dias com produção menor que demanda"] = int(simulacao[(simulacao["producao A"] < simulacao["demanda A"]) | (simulacao["producao B"] < simulacao["demanda B"])].count().max())
+analise.set_index(analise["Receita Total"])
+
+with pd.ExcelWriter(os.path.realpath(__file__).replace(__file__.split("\\")[-1], "simulacao.xlsx")) as writer:
+    simulacao.to_excel(writer, startcol=0, sheet_name="Simulação")
+    analise.to_excel(writer, startcol=12, sheet_name="Simulação")
